@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package api.v1;
+
+// Сервис для работы с кошельками и транзакциями
+service WalletService {
+  // REST/gRPC запрос: получить историю транзакций с пагинацией
+  rpc GetTransactions (GetTransactionsRequest) returns (GetTransactionsResponse);
+
+  // Стриминг (Streaming RPC): живой поток новых транзакций кошелька
+  rpc StreamTransactions (StreamTransactionsRequest) returns (stream Transaction);
+}
+
+message GetTransactionsRequest {
+  string wallet_address = 1;
+  int32 page = 2;
+  int32 limit = 3;
+}
+
+message GetTransactionsResponse {
+  repeated Transaction transactions = 1;
+  int32 total_count = 2;
+  bool has_more = 3;
+}
+
+message Transaction {
+  string id = 1;
+  string tx_hash = 2;
+  string from_address = 3;
+  string to_address = 4;
+  string amount = 5;       // В блокчейне большие числа, передаем как string
+  string timestamp = 6;
+  string token_symbol = 7;
+}
+
+message StreamTransactionsRequest {
+  string wallet_address = 1;
+}

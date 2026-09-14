@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Wallet {
+  id           String        @id @default(uuid())
+  address      String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@index([address])
+}
+
+model Transaction {
+  id          String   @id @default(uuid())
+  txHash      String   @unique
+  fromAddress String
+  toAddress   String
+  amount      String
+  tokenSymbol String   @default("USDT")
+  timestamp   DateTime @default(now())
+
+  walletId    String
+  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId, timestamp(sort: Desc)])
+}

@@ -1,0 +1,6 @@
+version: v2
+plugins:
+  # Генерирует и сообщения (классы данных), и сервисы Connect RPC в TypeScript
+  - local: protoc-gen-es
+    out: src/generated/proto
+    opt: target=ts

@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolvePackageJsonExports": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@utils/*": ["./src/utils/*"]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    /*
+      Explicitly includes type definitions for Node.js global objects and Jest test runner 
+      (e.g., 'describe', 'it', 'expect') to resolve TypeScript errors in test files. 
+    */
+    "types": ["node", "jest"]
+  }
+}
