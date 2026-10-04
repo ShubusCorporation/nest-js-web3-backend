@@ -102,6 +102,7 @@ export class WalletController {
         transactions: protoTransactions,
       });
     } catch (error: unknown) {
+      console.error('[WalletController] getTransactions error:', error);
       const status = getErrorStatus(error);
       const message = getErrorMessage(error);
 
@@ -112,9 +113,6 @@ export class WalletController {
       if (status === 404) {
         throw new ConnectError(message, Code.NotFound);
       }
-
-      console.error('[WalletController] Системная ошибка:', error);
-
       throw new ConnectError('Внутренняя ошибка сервера', Code.Internal);
     }
   }

@@ -12,6 +12,14 @@ export class WalletRepository {
     });
   }
 
+  async createWallet(address: string) {
+    return this.prisma.wallet.create({
+      data: {
+        address: address.toLowerCase(),
+      },
+    });
+  }
+
   async getPaginatedTransactions(
     walletId: string,
     offset: number,
@@ -19,7 +27,7 @@ export class WalletRepository {
   ) {
     return this.prisma.$transaction([
       this.prisma.transaction.findMany({
-        where: { walletId },
+        // where: { walletId },
         orderBy: { timestamp: 'desc' },
         skip: offset,
         take: limit,

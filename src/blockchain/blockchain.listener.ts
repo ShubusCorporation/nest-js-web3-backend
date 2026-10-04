@@ -170,8 +170,10 @@ import {
 } from 'viem';
 import { mainnet } from 'viem/chains';
 import { Redis } from 'ioredis';
+import { logger } from '@src/utils/logger';
 
 import { PrismaService } from '@src/prisma/prisma.service';
+import { WalletRepository } from '@src/wallet/wallet.repository';
 
 const USDT_ADDRESS = '0xdAC17F958D2ee523a2206206994597C13D831ec7' as const;
 
@@ -184,7 +186,10 @@ export class BlockchainListener implements OnModuleInit {
   private readonly viemClient: PublicClient;
   private readonly redis: Redis;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly walletRepository: WalletRepository,
+  ) {
     this.viemClient = createPublicClient({
       chain: mainnet,
       transport: http(process.env.RPC_URL ?? 'https://alchemy.com'),
@@ -205,7 +210,9 @@ export class BlockchainListener implements OnModuleInit {
       event: transferEvent,
 
       onLogs: (logs) => {
-        void this.handleTransferLogs(logs);
+        void this.handleTransferLogs(logs).catch((error: unknown) => {
+          logger.error(error, '[Blockchain] Failed to process transfer logs');
+        });
       },
     });
   }
@@ -226,18 +233,15 @@ export class BlockchainListener implements OnModuleInit {
       if (!from || !to || value === undefined) {
         continue;
       }
+      console.log(`[Transfer] from: ${from} to: ${to} value: ${value}`);
 
       const fromAddress = from.toLowerCase();
       const toAddress = to.toLowerCase();
 
-      const activeWallet = await this.prisma.wallet.findUnique({
-        where: {
-          address: toAddress,
-        },
-      });
+      let activeWallet = await this.walletRepository.findByAddress(toAddress);
 
       if (!activeWallet) {
-        continue;
+        activeWallet = await this.walletRepository.createWallet(toAddress);
       }
 
       const tx = await this.prisma.transaction.create({

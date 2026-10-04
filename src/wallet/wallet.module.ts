@@ -5,6 +5,6 @@ import { WalletController } from './wallet.controller';
 
 @Module({
   providers: [WalletRepository, WalletService, WalletController],
-  exports: [WalletController], // Экспортируем, чтобы забрать в главном файле для gRPC-роутера
+  exports: [WalletRepository, WalletController], // Экспортируем, чтобы забрать в главном файле для gRPC-роутера
 })
 export class WalletModule {}

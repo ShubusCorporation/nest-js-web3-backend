@@ -19,15 +19,15 @@ model Wallet {
 
 model Transaction {
   id          String   @id @default(uuid())
-  txHash      String   @unique
+  txHash      String
   fromAddress String
   toAddress   String
   amount      String
   tokenSymbol String   @default("USDT")
   timestamp   DateTime @default(now())
 
-  walletId    String
-  wallet      Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId, timestamp(sort: Desc)])
 }

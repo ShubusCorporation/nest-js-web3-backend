@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { WalletRepository } from './wallet.repository';
 
 export interface UserTransaction {
@@ -38,10 +34,13 @@ export class WalletService {
     const safeLimit = Math.min(100, Math.max(1, limit || 20));
     const offset = (safePage - 1) * safeLimit;
 
-    const wallet = await this.repository.findByAddress(address);
+    let wallet = await this.repository.findByAddress(address);
 
     if (!wallet) {
-      throw new NotFoundException('Кошелек не зарегистрирован в системе');
+      console.log(
+        `[WalletService] Новый пользователь! Регистрируем кошелек: ${address}`,
+      );
+      wallet = await this.repository.createWallet(address); // Ленивая регистрация
     }
 
     const [transactions, totalCount] =
