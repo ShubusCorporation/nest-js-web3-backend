@@ -27,7 +27,7 @@ export class WalletRepository {
   ) {
     return this.prisma.$transaction([
       this.prisma.transaction.findMany({
-        // where: { walletId },
+        where: { walletId },
         orderBy: { timestamp: 'desc' },
         skip: offset,
         take: limit,

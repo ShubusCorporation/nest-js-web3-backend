@@ -119,6 +119,8 @@ export class WalletController {
 
   /**
    * Server Streaming RPC.
+   * How to check:
+   * docker exec -it nest-redis redis-cli PUBLISH NEW_TRANSACTION "{\"id\":\"live-1\",\"txHash\":\"0x9999999999999999999999999999999999999999999999999999999999999999\",\"fromAddress\":\"0x0000000000000000000000000000000000000000\",\"toAddress\":\"0x730BFc4f4D221a8D84787524973692C0801Fe681\",\"amount\":\"777\",\"timestamp\":\"2026-09-03T16:00:00.000Z\",\"tokenSymbol\":\"USDT\"}"
    */
   async *streamTransactions(
     req: StreamTransactionsRequest,

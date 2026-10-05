@@ -233,16 +233,15 @@ export class BlockchainListener implements OnModuleInit {
       if (!from || !to || value === undefined) {
         continue;
       }
-      console.log(`[Transfer] from: ${from} to: ${to} value: ${value}`);
-
       const fromAddress = from.toLowerCase();
       const toAddress = to.toLowerCase();
-
-      let activeWallet = await this.walletRepository.findByAddress(toAddress);
+      const activeWallet = await this.walletRepository.findByAddress(toAddress);
 
       if (!activeWallet) {
-        activeWallet = await this.walletRepository.createWallet(toAddress);
+        return;
+        //activeWallet = await this.walletRepository.createWallet(toAddress);
       }
+      console.log(`[Transfer] from: ${from} to: ${to} value: ${value}`);
 
       const tx = await this.prisma.transaction.create({
         data: {

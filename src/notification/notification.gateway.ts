@@ -283,7 +283,9 @@ export class NotificationGateway
      * Using `void` explicitly marks this Promise as intentionally fire-and-forget
      * and satisfies the project's strict no-floating-promises policy.
      */
-    void client.join(room);
+    if (!client.rooms.has(room)) {
+      void client.join(room);
+    }
 
     console.log(
       `👤 Клиент ${client.id} подписался на обновления кошелька: ${room}`,
