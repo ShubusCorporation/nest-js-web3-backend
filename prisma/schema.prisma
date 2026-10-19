@@ -8,13 +8,14 @@ datasource db {
 }
 
 model Wallet {
-  id           String        @id @default(uuid())
-  address      String        @unique
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  transactions Transaction[]
-  name         String?
-  watchers     Int           @default(0)
+  id             String          @id @default(uuid())
+  address        String          @unique
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  transactions   Transaction[]
+  name           String?
+  watchers       Int             @default(0)
+  walletWatchers WalletWatcher[]
 
   @@index([address])
 }
@@ -32,4 +33,27 @@ model Transaction {
   wallet   Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId, timestamp(sort: Desc)])
+}
+
+model User {
+  id        String   @id @default(uuid())
+  address   String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  watchedWallets WalletWatcher[]
+}
+
+model WalletWatcher {
+  id        String   @id @default(uuid())
+  userId    String
+  walletId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, walletId])
+  @@index([userId])
+  @@index([walletId])
 }

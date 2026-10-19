@@ -9,6 +9,7 @@ import {
   TransactionSchema,
   StreamTransactionsRequest,
   Transaction,
+  GetWatchedAddressesRequest,
 } from '@src/generated/proto/src/proto/wallet-service_pb';
 
 import { WalletService as WalletServiceClass } from './wallet.service';
@@ -109,7 +110,24 @@ export class WalletController {
       if (status === 400) {
         throw new ConnectError(message, Code.InvalidArgument);
       }
+      if (status === 404) {
+        throw new ConnectError(message, Code.NotFound);
+      }
+      throw new ConnectError('Внутренняя ошибка сервера', Code.Internal);
+    }
+  }
 
+  async getWatchedAddresses(req: GetWatchedAddressesRequest) {
+    try {
+      return await this.walletService.getUserWatchedAddresses(req.userWallet);
+    } catch (error: unknown) {
+      console.error('[WalletController] getWatchedAddresses error:', error);
+      const status = getErrorStatus(error);
+      const message = getErrorMessage(error);
+
+      if (status === 400) {
+        throw new ConnectError(message, Code.InvalidArgument);
+      }
       if (status === 404) {
         throw new ConnectError(message, Code.NotFound);
       }

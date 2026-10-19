@@ -200,6 +200,7 @@ import {
   Transaction,
   TransactionSchema,
 } from '@src/generated/proto/src/proto/wallet-service_pb';
+import { WalletRepository } from '@src/wallet/wallet.repository';
 
 interface RedisTransactionPayload {
   id: string;
@@ -245,7 +246,7 @@ export class NotificationGateway
 
   private readonly redisSubscriber: Redis;
 
-  constructor() {
+  constructor(private readonly walletRepository: WalletRepository) {
     this.redisSubscriber = new Redis(
       process.env.REDIS_URL ?? 'redis://localhost:6379',
     );
@@ -266,10 +267,10 @@ export class NotificationGateway
   }
 
   @SubscribeMessage('subscribe_wallet')
-  handleWalletSubscribe(
+  async handleWalletSubscribe(
     @MessageBody() data: { walletAddress: string },
     @ConnectedSocket() client: Socket,
-  ): void {
+  ) {
     const room = data.walletAddress.toLowerCase();
 
     /*
@@ -285,13 +286,38 @@ export class NotificationGateway
      */
     if (!client.rooms.has(room)) {
       void client.join(room);
+      const prismaWallet = await this.walletRepository.findByAddress(room);
+      if (prismaWallet) {
+        await this.walletRepository.addWatchers(prismaWallet, 1);
+      }
     }
-
     console.log(
       `👤 Клиент ${client.id} подписался на обновления кошелька: ${room}`,
     );
-
     client.emit('subscribed', {
+      status: 'success',
+      wallet: room,
+    });
+  }
+
+  @SubscribeMessage('unsubscribe_wallet')
+  async handleWalletUnsubscribe(
+    @MessageBody() data: { walletAddress: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const room = data.walletAddress.toLowerCase();
+
+    if (client.rooms.has(room)) {
+      await client.leave(room);
+      const prismaWallet = await this.walletRepository.findByAddress(room);
+      if (prismaWallet) {
+        await this.walletRepository.addWatchers(prismaWallet, -1);
+      }
+    }
+    console.log(
+      `👤 Клиент ${client.id} отписался от обновлений кошелька: ${room}`,
+    );
+    client.emit('unsubscribed', {
       status: 'success',
       wallet: room,
     });

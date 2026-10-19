@@ -2,19 +2,32 @@ syntax = "proto3";
 
 package api.v1;
 
-// Сервис для работы с кошельками и транзакциями
+// Сервис для работы с кошельками и транзакциями.
 service WalletService {
-  // REST/gRPC запрос: получить историю транзакций с пагинацией
-  rpc GetTransactions (GetTransactionsRequest) returns (GetTransactionsResponse);
+  // Получить историю транзакций с пагинацией.
+  rpc GetTransactions(GetTransactionsRequest)
+      returns (GetTransactionsResponse);
 
-  // Стриминг (Streaming RPC): живой поток новых транзакций кошелька
-  rpc StreamTransactions (StreamTransactionsRequest) returns (stream Transaction);
+  // Поток новых транзакций отслеживаемого кошелька.
+  rpc StreamTransactions(StreamTransactionsRequest)
+      returns (stream Transaction);
+
+  // Включить или отключить мониторинг адреса для пользователя.
+  rpc ToggleWatchAddress(ToggleWatchAddressRequest)
+      returns (ToggleWatchAddressResponse);
+
+  // Получить список адресов, отслеживаемых пользователем.
+  rpc GetWatchedAddresses(GetWatchedAddressesRequest)
+      returns (GetWatchedAddressesResponse);
 }
 
 message GetTransactionsRequest {
   string wallet_address = 1;
   int32 page = 2;
   int32 limit = 3;
+
+  // Адрес пользователя, которому принадлежит подписка.
+  string user_wallet = 4;
 }
 
 message GetTransactionsResponse {
@@ -28,11 +41,42 @@ message Transaction {
   string tx_hash = 2;
   string from_address = 3;
   string to_address = 4;
-  string amount = 5;       // В блокчейне большие числа, передаем как string
+  string amount = 5;
   string timestamp = 6;
   string token_symbol = 7;
 }
 
 message StreamTransactionsRequest {
   string wallet_address = 1;
+
+  // При необходимости сервер может проверять подписку пользователя.
+  string user_wallet = 2;
+}
+
+message ToggleWatchAddressRequest {
+  string user_wallet = 1;
+  string wallet_address = 2;
+  bool enabled = 3;
+}
+
+message ToggleWatchAddressResponse {
+  bool success = 1;
+  string wallet_address = 2;
+  bool enabled = 3;
+  string message = 4;
+}
+
+message GetWatchedAddressesRequest {
+  string user_wallet = 1;
+}
+
+message WatchedAddress {
+  string wallet_address = 1;
+  string name = 2;
+  string type = 3;
+  bool enabled = 4;
+}
+
+message GetWatchedAddressesResponse {
+  repeated WatchedAddress addresses = 1;
 }

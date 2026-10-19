@@ -235,25 +235,28 @@ export class BlockchainListener implements OnModuleInit {
       }
       const fromAddress = from.toLowerCase();
       const toAddress = to.toLowerCase();
-      const activeWallet = await this.walletRepository.findByAddress(toAddress);
+      const activeWallets = await this.walletRepository.hasAnyAddress([
+        toAddress,
+        fromAddress,
+      ]);
 
-      if (!activeWallet) {
-        return;
-        //activeWallet = await this.walletRepository.createWallet(toAddress);
+      if (!activeWallets.length) {
+        continue;
       }
       console.log(`[Transfer] from: ${from} to: ${to} value: ${value}`);
 
-      const tx = await this.prisma.transaction.create({
-        data: {
-          txHash: log.transactionHash,
-          fromAddress,
-          toAddress,
-          amount: value.toString(),
-          walletId: activeWallet.id,
-        },
-      });
-
-      await this.redis.publish('NEW_TRANSACTION', JSON.stringify(tx));
+      for (let i = 0; i < activeWallets.length; i++) {
+        const tx = await this.prisma.transaction.create({
+          data: {
+            txHash: log.transactionHash,
+            fromAddress,
+            toAddress,
+            amount: value.toString(),
+            walletId: activeWallets[i].id,
+          },
+        });
+        await this.redis.publish('NEW_TRANSACTION', JSON.stringify(tx));
+      }
     }
   }
 }

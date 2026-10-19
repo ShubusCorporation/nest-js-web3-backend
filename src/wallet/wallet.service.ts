@@ -21,6 +21,10 @@ export interface GetUserTransactionsResult {
 export class WalletService {
   constructor(private readonly repository: WalletRepository) {}
 
+  async getUserWatchedAddresses(address: string) {
+    return await this.repository.getUserWatchedAddresses(address);
+  }
+
   async getUserTransactions(
     address: string,
     page: number,

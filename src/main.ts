@@ -26,6 +26,7 @@ async function bootstrap() {
       router.service(WalletService, {
         getTransactions: (req) => walletController.getTransactions(req),
         streamTransactions: (req) => walletController.streamTransactions(req),
+        getWatchedAddresses: (req) => walletController.getWatchedAddresses(req),
       });
     },
   });
