@@ -11,7 +11,7 @@ export interface UserTransaction {
   tokenSymbol: string;
 }
 
-export interface GetUserTransactionsResult {
+export interface GetTransactionsResult {
   transactions: UserTransaction[];
   totalCount: number;
   hasMore: boolean;
@@ -21,15 +21,16 @@ export interface GetUserTransactionsResult {
 export class WalletService {
   constructor(private readonly repository: WalletRepository) {}
 
-  async getUserWatchedAddresses(address: string) {
-    return await this.repository.getUserWatchedAddresses(address);
+  async getUserWatchedAddresses(userWallet: string) {
+    await this.repository.ensureUserExists(userWallet);
+    return await this.repository.getUserWatchedAddresses(userWallet);
   }
 
-  async getUserTransactions(
+  async getTransactions(
     address: string,
     page: number,
     limit: number,
-  ): Promise<GetUserTransactionsResult> {
+  ): Promise<GetTransactionsResult> {
     if (!address || !address.startsWith('0x')) {
       throw new BadRequestException('Неверный формат адреса кошелька');
     }
@@ -41,10 +42,8 @@ export class WalletService {
     let wallet = await this.repository.findByAddress(address);
 
     if (!wallet) {
-      console.log(
-        `[WalletService] Новый пользователь! Регистрируем кошелек: ${address}`,
-      );
-      wallet = await this.repository.createWallet(address); // Ленивая регистрация
+      console.log(`[WalletService] New target wallet! Registering: ${address}`);
+      wallet = await this.repository.createWallet(address);
     }
 
     const [transactions, totalCount] =

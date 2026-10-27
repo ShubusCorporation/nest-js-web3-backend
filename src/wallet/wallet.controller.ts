@@ -10,6 +10,7 @@ import {
   StreamTransactionsRequest,
   Transaction,
   GetWatchedAddressesRequest,
+  GetWatchedAddressesResponseSchema,
 } from '@src/generated/proto/src/proto/wallet-service_pb';
 
 import { WalletService as WalletServiceClass } from './wallet.service';
@@ -79,7 +80,7 @@ export class WalletController {
    */
   async getTransactions(req: GetTransactionsRequest) {
     try {
-      const result = await this.walletService.getUserTransactions(
+      const result = await this.walletService.getTransactions(
         req.walletAddress,
         req.page,
         req.limit,
@@ -119,7 +120,10 @@ export class WalletController {
 
   async getWatchedAddresses(req: GetWatchedAddressesRequest) {
     try {
-      return await this.walletService.getUserWatchedAddresses(req.userWallet);
+      const addresses = await this.walletService.getUserWatchedAddresses(
+        req.userWallet,
+      );
+      return create(GetWatchedAddressesResponseSchema, { addresses });
     } catch (error: unknown) {
       console.error('[WalletController] getWatchedAddresses error:', error);
       const status = getErrorStatus(error);

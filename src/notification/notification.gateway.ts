@@ -268,11 +268,11 @@ export class NotificationGateway
 
   @SubscribeMessage('subscribe_wallet')
   async handleWalletSubscribe(
-    @MessageBody() data: { walletAddress: string },
+    @MessageBody() data: { walletAddress: string; userWallet: string },
     @ConnectedSocket() client: Socket,
   ) {
     const room = data.walletAddress.toLowerCase();
-
+    console.log(`👤 Client ${client.id} requires a subscribtion for ${room}`);
     /*
      * Socket.IO's join() returns a Promise because joining a room may involve
      * asynchronous adapter operations.
@@ -288,7 +288,7 @@ export class NotificationGateway
       void client.join(room);
       const prismaWallet = await this.walletRepository.findByAddress(room);
       if (prismaWallet) {
-        await this.walletRepository.addWatchers(prismaWallet, 1);
+        await this.walletRepository.addWatcher(data.userWallet, prismaWallet);
       }
     }
     console.log(
@@ -302,7 +302,7 @@ export class NotificationGateway
 
   @SubscribeMessage('unsubscribe_wallet')
   async handleWalletUnsubscribe(
-    @MessageBody() data: { walletAddress: string },
+    @MessageBody() data: { walletAddress: string; userWallet: string },
     @ConnectedSocket() client: Socket,
   ) {
     const room = data.walletAddress.toLowerCase();
@@ -311,7 +311,10 @@ export class NotificationGateway
       await client.leave(room);
       const prismaWallet = await this.walletRepository.findByAddress(room);
       if (prismaWallet) {
-        await this.walletRepository.addWatchers(prismaWallet, -1);
+        await this.walletRepository.removeWatcher(
+          data.userWallet,
+          prismaWallet,
+        );
       }
     }
     console.log(

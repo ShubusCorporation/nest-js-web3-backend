@@ -13,17 +13,47 @@ export class WalletRepository {
     });
   }
 
-  async getUserWatchedAddresses(address: string) {
-    return this.prisma.wallet.findUnique({
-      where: { address: address.toLowerCase() },
-      select: { address: true },
+  async ensureUserExists(userWallet: string) {
+    const address = userWallet.toLowerCase();
+
+    return this.prisma.user.upsert({
+      where: { address },
+      update: {},
+      create: { address },
     });
+  }
+
+  async getUserWatchedAddresses(userWallet: string) {
+    const wallets = await this.prisma.walletWatcher.findMany({
+      where: {
+        user: {
+          address: userWallet.toLowerCase(),
+        },
+      },
+      select: {
+        wallet: {
+          select: {
+            address: true,
+            name: true,
+          },
+        },
+      },
+    });
+    return wallets.map(({ wallet }) => ({
+      walletAddress: wallet.address,
+      name: wallet.name ?? '',
+      type: 'wallet',
+      enabled: true,
+    }));
   }
 
   async hasAnyAddress(addresses: string[]) {
     const lowerCaseAddresses = addresses.map((addr) => addr.toLowerCase());
     const found = await this.prisma.wallet.findMany({
       where: {
+        watchers: {
+          gt: 1,
+        },
         address: {
           in: lowerCaseAddresses,
         },
@@ -45,11 +75,22 @@ export class WalletRepository {
     watcher: string,
     wallet: NonNullable<Awaited<ReturnType<WalletRepository['findByAddress']>>>,
   ) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        address: {
+          equals: watcher.toLowerCase(),
+        },
+      },
+    });
+
+    if (!user) {
+      throw new Error(`User not found for wallet: ${watcher}`);
+    }
     try {
       return await this.prisma.$transaction(async (tx) => {
         await tx.walletWatcher.create({
           data: {
-            userId: watcher,
+            userId: user.id,
             walletId: wallet.id,
           },
         });
@@ -78,11 +119,21 @@ export class WalletRepository {
     watcher: string,
     wallet: NonNullable<Awaited<ReturnType<WalletRepository['findByAddress']>>>,
   ) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        address: {
+          equals: watcher.toLowerCase(),
+        },
+      },
+    });
+    if (!user) {
+      throw new Error(`User not found for wallet: ${watcher}`);
+    }
     return this.prisma.$transaction(async (tx) => {
       // Use deleteMany to avoid throwing an error if the watcher subscription does not exist.
       const deleted = await tx.walletWatcher.deleteMany({
         where: {
-          userId: watcher,
+          userId: user.id,
           walletId: wallet.id,
         },
       });
@@ -90,7 +141,6 @@ export class WalletRepository {
       if (deleted.count === 0) {
         return wallet;
       }
-
       return tx.wallet.update({
         where: { id: wallet.id },
         data: {
@@ -99,22 +149,6 @@ export class WalletRepository {
           },
         },
       });
-    });
-  }
-
-  private async addWatchers(
-    wallet: NonNullable<Awaited<ReturnType<WalletRepository['findByAddress']>>>,
-    watchersNumber: number,
-  ) {
-    const id = wallet.id;
-
-    return this.prisma.wallet.update({
-      where: { id },
-      data: {
-        watchers: {
-          increment: watchersNumber,
-        },
-      },
     });
   }
 
