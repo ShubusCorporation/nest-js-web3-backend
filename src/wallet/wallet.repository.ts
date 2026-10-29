@@ -13,6 +13,31 @@ export class WalletRepository {
     });
   }
 
+  async findOrCreateByAddress(address: string) {
+    const normalizedAddress = address.toLowerCase();
+
+    try {
+      return await this.prisma.wallet.upsert({
+        where: { address: normalizedAddress },
+        update: {},
+        create: { address: normalizedAddress },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const wallet = await this.prisma.wallet.findUnique({
+          where: { address: normalizedAddress },
+        });
+
+        if (wallet) return wallet;
+      }
+
+      throw error;
+    }
+  }
+
   async ensureUserExists(userWallet: string) {
     const address = userWallet.toLowerCase();
 
@@ -75,6 +100,7 @@ export class WalletRepository {
     watcher: string,
     wallet: NonNullable<Awaited<ReturnType<WalletRepository['findByAddress']>>>,
   ) {
+    console.log('STEP 4.1');
     const user = await this.prisma.user.findFirst({
       where: {
         address: {
@@ -82,19 +108,23 @@ export class WalletRepository {
         },
       },
     });
+    console.log('STEP 4.2');
 
     if (!user) {
+      console.log('STEP 4.3');
       throw new Error(`User not found for wallet: ${watcher}`);
     }
+    console.log('STEP 4.4');
     try {
       return await this.prisma.$transaction(async (tx) => {
+        console.log('STEP 4.5');
         await tx.walletWatcher.create({
           data: {
             userId: user.id,
             walletId: wallet.id,
           },
         });
-
+        console.log('STEP 4.6');
         return tx.wallet.update({
           where: { id: wallet.id },
           data: {
@@ -105,12 +135,15 @@ export class WalletRepository {
         });
       });
     } catch (error) {
+      console.log('STEP 4.7');
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002' // Subscription already exists.
       ) {
+        console.log('STEP 4.8');
         return wallet;
       }
+      console.log('STEP 4.9');
       throw error;
     }
   }

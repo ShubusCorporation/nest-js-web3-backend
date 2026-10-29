@@ -272,7 +272,9 @@ export class NotificationGateway
     @ConnectedSocket() client: Socket,
   ) {
     const room = data.walletAddress.toLowerCase();
-    console.log(`👤 Client ${client.id} requires a subscribtion for ${room}`);
+    console.log(
+      `👤 Client ${client.id} requires a subscribtion for room ${room}`,
+    );
     /*
      * Socket.IO's join() returns a Promise because joining a room may involve
      * asynchronous adapter operations.
@@ -286,10 +288,8 @@ export class NotificationGateway
      */
     if (!client.rooms.has(room)) {
       void client.join(room);
-      const prismaWallet = await this.walletRepository.findByAddress(room);
-      if (prismaWallet) {
-        await this.walletRepository.addWatcher(data.userWallet, prismaWallet);
-      }
+      const wallet = await this.walletRepository.findOrCreateByAddress(room);
+      await this.walletRepository.addWatcher(data.userWallet, wallet);
     }
     console.log(
       `👤 Клиент ${client.id} подписался на обновления кошелька: ${room}`,

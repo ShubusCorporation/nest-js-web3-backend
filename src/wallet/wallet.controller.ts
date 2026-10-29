@@ -80,6 +80,9 @@ export class WalletController {
    */
   async getTransactions(req: GetTransactionsRequest) {
     try {
+      console.error(
+        `[WalletController] getTransactions for ${req.walletAddress}`,
+      );
       const result = await this.walletService.getTransactions(
         req.walletAddress,
         req.page,

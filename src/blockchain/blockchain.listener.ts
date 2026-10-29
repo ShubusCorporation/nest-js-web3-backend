@@ -241,6 +241,7 @@ export class BlockchainListener implements OnModuleInit {
       ]);
 
       if (!activeWallets.length) {
+        //console.log(`From ${fromAddress} to ${toAddress} - false`);
         continue;
       }
       console.log(`[Transfer] from: ${from} to: ${to} value: ${value}`);

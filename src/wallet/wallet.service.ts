@@ -19,11 +19,11 @@ export interface GetTransactionsResult {
 
 @Injectable()
 export class WalletService {
-  constructor(private readonly repository: WalletRepository) {}
+  constructor(private readonly walletRepository: WalletRepository) {}
 
   async getUserWatchedAddresses(userWallet: string) {
-    await this.repository.ensureUserExists(userWallet);
-    return await this.repository.getUserWatchedAddresses(userWallet);
+    await this.walletRepository.ensureUserExists(userWallet);
+    return await this.walletRepository.getUserWatchedAddresses(userWallet);
   }
 
   async getTransactions(
@@ -34,20 +34,13 @@ export class WalletService {
     if (!address || !address.startsWith('0x')) {
       throw new BadRequestException('Неверный формат адреса кошелька');
     }
-
     const safePage = Math.max(1, page || 1);
     const safeLimit = Math.min(100, Math.max(1, limit || 20));
     const offset = (safePage - 1) * safeLimit;
-
-    let wallet = await this.repository.findByAddress(address);
-
-    if (!wallet) {
-      console.log(`[WalletService] New target wallet! Registering: ${address}`);
-      wallet = await this.repository.createWallet(address);
-    }
+    const wallet = await this.walletRepository.findOrCreateByAddress(address);
 
     const [transactions, totalCount] =
-      await this.repository.getPaginatedTransactions(
+      await this.walletRepository.getPaginatedTransactions(
         wallet.id,
         offset,
         safeLimit,
